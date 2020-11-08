@@ -1,0 +1,22 @@
+spring:
+  liquibase:
+    change-log: classpath:db/changelog/changelog.xml
+  datasource:
+    platform: postgres
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/test
+    username: development
+    password: development
+    initialization-mode: never
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate.format_sql: true
+      hibernate.jdbc.lob.non_contextual_creation: true #fix hibernate not correctly handling available features
+      org.hibernate.envers.audit_table_suffix: _event_log
+
+server:
+  port: 8081
+

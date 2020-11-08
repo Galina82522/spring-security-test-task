@@ -1,0 +1,19 @@
+{
+    "properties": [
+        {
+            "name": "spring.port",
+            "type": "java.lang.String",
+            "description": "Description for spring.port."
+        },
+        {
+            "name": "parking.api.url-prefix",
+            "type": "java.lang.String",
+            "description": "Description for parking.api.url-prefix."
+        },
+        {
+            "name": "spring.liquibase.username",
+            "type": "java.lang.String",
+            "description": "Description for spring.liquibase.username."
+        }
+    ]
+}

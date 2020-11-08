@@ -1,0 +1,181 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="create_table_users" author="galina.verkhova">
+        <createTable tableName="users">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true" primaryKeyName="usersPK"/>
+            </column>
+            <column name="login" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="first_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="VARCHAR(100)"/>
+            <column name="password" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="access_state" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="create_login_index" author="galina.verkhova">
+        <createIndex indexName="IX_LOGIN" tableName="users">
+            <column name="login"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="add_uniq_login" author="galina.verkhova">
+        <addUniqueConstraint columnNames="login" constraintName="uniq_login_constraint" tableName="users"/>
+    </changeSet>
+    <changeSet id="create_table_roles" author="galina.verkhova">
+        <createTable tableName="roles">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true" primaryKeyName="rolesPK"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="create_name_index" author="galina.verkhova">
+        <createIndex indexName="IX_NAME" tableName="roles">
+            <column name="name"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="add_uniq_role_name" author="galina.verkhova">
+        <addUniqueConstraint columnNames="name" constraintName="uniq_uniq_role_name" tableName="roles"/>
+    </changeSet>
+    <changeSet id="create_table_users_roles_rel" author="galina.verkhova">
+        <createTable tableName="users_roles_rel">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="add_foreign_key_user_id" author="galina.verkhova">
+        <addForeignKeyConstraint
+                baseColumnNames="user_id"
+                baseTableName="users_roles_rel"
+                constraintName="user-foreign-key"
+                deferrable="false"
+                initiallyDeferred="false"
+                referencedColumnNames="id"
+                referencedTableName="users"/>
+    </changeSet>
+    <changeSet id="add_foreign_key_constraint_role_id" author="galina.verkhova">
+        <addForeignKeyConstraint
+                baseColumnNames="role_id"
+                baseTableName="users_roles_rel"
+                constraintName="role-foreign-key"
+                deferrable="false"
+                initiallyDeferred="false"
+                referencedColumnNames="id"
+                referencedTableName="roles"/>
+    </changeSet>
+    <changeSet id="create_oauth2_tables" author="galina.verkhova">
+        <createTable tableName="oauth_access_token">
+            <column name="token_id" type="VARCHAR(256)"/>
+            <column name="token" type="BYTEA"/>
+            <column name="authentication_id" type="VARCHAR(256)">
+                <constraints primaryKey="true" primaryKeyName="authentication_idPK"/>
+            </column>
+            <column name="user_name" type="VARCHAR(256)"/>
+            <column name="client_id" type="VARCHAR(256)"/>
+            <column name="authentication" type="BYTEA"/>
+            <column name="refresh_token" type="VARCHAR(256)"/>
+        </createTable>
+        <createTable tableName="oauth_refresh_token">
+            <column name="token_id" type="VARCHAR(256)"/>
+            <column name="token" type="BYTEA"/>
+            <column name="authentication" type="BYTEA"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="create_notes_table" author="galina.verkhova">
+        <createTable tableName="notes">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true" primaryKeyName="notesPK"/>
+            </column>
+            <column name="title" type="VARCHAR(256)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="text" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_by" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created" type="TIMESTAMP WITHOUT TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="create_notes_log_table" author="galina.verkhova">
+        <createTable tableName="revinfo">
+            <column autoIncrement="true" name="rev" type="INT">
+                <constraints primaryKey="true" primaryKeyName="revinfoPK"/>
+            </column>
+            <column name="revtstmp" type="BIGINT"/>
+        </createTable>
+        <createSequence sequenceName="hibernate_sequence"/>
+        <createTable tableName="notes_event_log">
+            <column autoIncrement="true" name="id" type="BIGINT"/>
+            <column name="rev" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="SMALLINT"/>
+            <column name="title" type="VARCHAR(256)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="text" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_by" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created" type="TIMESTAMP WITHOUT TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey columnNames="id, rev" constraintName="notes_event_log_PK" tableName="notes_event_log"/>
+        <addForeignKeyConstraint
+                baseColumnNames="rev"
+                baseTableName="notes_event_log"
+                constraintName="revinfo-constraint-foreign-key"
+                deferrable="false"
+                initiallyDeferred="false"
+                referencedColumnNames="rev"
+                referencedTableName="revinfo"/>
+    </changeSet>
+    <changeSet id="add_foreign_key_constraint_user_id" author="galina.verkhova">
+        <addForeignKeyConstraint
+                baseColumnNames="user_id"
+                baseTableName="notes"
+                constraintName="user-constraint-foreign-key"
+                deferrable="false"
+                initiallyDeferred="false"
+                referencedColumnNames="id"
+                referencedTableName="users"/>
+    </changeSet>
+</databaseChangeLog>
