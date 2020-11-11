@@ -83,7 +83,7 @@ public class UserIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        String response = mockMvc.perform(post("/user/registration")
+        String response = mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andDo(print())
@@ -112,7 +112,7 @@ public class UserIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        String response = mockMvc.perform(post("/user/registration")
+        String response = mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andDo(print())
@@ -141,7 +141,7 @@ public class UserIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(post("/user/registration")
+        mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andExpect(status().isForbidden());
@@ -157,7 +157,7 @@ public class UserIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(post("/user/registration")
+        mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andExpect(status().isConflict());
@@ -166,7 +166,7 @@ public class UserIntegrationTests {
     @WithUserDetails(value = adminUsername, userDetailsServiceBeanName = "userDetailsService")
     @Test
     public void getUserAccountTest_WithAdmin() throws Exception {
-        mockMvc.perform(get("/user/" + user.getId()))
+        mockMvc.perform(get("/users/" + user.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("id", equalTo(user.getId().intValue())))
@@ -176,7 +176,7 @@ public class UserIntegrationTests {
     @WithUserDetails(value = userUsername, userDetailsServiceBeanName = "userDetailsService")
     @Test
     public void getUserAccountTest_WithCurrentUser() throws Exception {
-        mockMvc.perform(get("/user/" + user.getId()))
+        mockMvc.perform(get("/users/" + user.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("id", equalTo(user.getId().intValue())))
@@ -186,7 +186,7 @@ public class UserIntegrationTests {
     @WithUserDetails(value = userUsername, userDetailsServiceBeanName = "userDetailsService")
     @Test
     public void getUserAccountTest_WithNotCurrentUser() throws Exception {
-        mockMvc.perform(get("/user/" + admin.getId()))
+        mockMvc.perform(get("/users/" + admin.getId()))
                 .andExpect(status().isMethodNotAllowed());
     }
 
@@ -196,7 +196,7 @@ public class UserIntegrationTests {
         long id = user.getId();
         userRepository.delete(user);
 
-        mockMvc.perform(get("/user/" + id))
+        mockMvc.perform(get("/users/" + id))
                 .andExpect(status().isBadRequest());
     }
 
@@ -205,8 +205,36 @@ public class UserIntegrationTests {
     public void getUserAccountTest_NotExistId_WithUser() throws Exception {
         userRepository.deleteAllInBatch();
 
-        mockMvc.perform(get("/user/" + 1))
+        mockMvc.perform(get("/users/" + 1))
                 .andExpect(status().isBadRequest());
+    }
+
+    @WithUserDetails(value = userUsername, userDetailsServiceBeanName = "userDetailsService")
+    @Test
+    public void getAllUsers_WithUser() throws Exception {
+        mockMvc.perform(get("/users"))
+                .andExpect(status().isForbidden());
+    }
+
+    @WithAnonymousUser
+    @Test
+    public void getAllUsers_WithAnonymous() throws Exception {
+        mockMvc.perform(get("/users"))
+                .andExpect(status().isForbidden());
+    }
+
+    @WithUserDetails(value = adminUsername, userDetailsServiceBeanName = "userDetailsService")
+    @Test
+    public void getAllUsers_WithAdmin() throws Exception {
+        mockMvc.perform(get("/users"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].id", notNullValue()))
+                .andExpect(jsonPath("$.content[0].login", is("john")))
+                .andExpect(jsonPath("$.content[1].id", notNullValue()))
+                .andExpect(jsonPath("$.content[1].login", is("galya")));
     }
 
     @WithUserDetails(value = adminUsername, userDetailsServiceBeanName = "userDetailsService")
@@ -219,7 +247,7 @@ public class UserIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(put("/user/" + user.getId())
+        mockMvc.perform(put("/users/" + user.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andDo(print())
@@ -239,7 +267,7 @@ public class UserIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(put("/user/" + user.getId())
+        mockMvc.perform(put("/users/" + user.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andDo(print())
@@ -259,7 +287,7 @@ public class UserIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(put("/user/" + user.getId())
+        mockMvc.perform(put("/users/" + user.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andExpect(status().isForbidden());
@@ -275,7 +303,7 @@ public class UserIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(put("/user/" + admin.getId())
+        mockMvc.perform(put("/users/" + admin.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andExpect(status().isMethodNotAllowed());
@@ -294,7 +322,7 @@ public class UserIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(put("/user/" + id)
+        mockMvc.perform(put("/users/" + id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andExpect(status().isBadRequest());
@@ -303,7 +331,7 @@ public class UserIntegrationTests {
     @WithUserDetails(value = adminUsername, userDetailsServiceBeanName = "userDetailsService")
     @Test
     public void deleteUserAccountTest_WithAdmin() throws Exception {
-        mockMvc.perform(delete("/user/" + user.getId()))
+        mockMvc.perform(put("/users/" + user.getId() + "/access_state"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -318,14 +346,14 @@ public class UserIntegrationTests {
     @WithUserDetails(value = userUsername, userDetailsServiceBeanName = "userDetailsService")
     @Test
     public void deleteUserAccountTest_WithUser() throws Exception {
-        mockMvc.perform(delete("/user/" + admin.getId()))
+        mockMvc.perform(put("/users/" + admin.getId() + "/access_state"))
                 .andExpect(status().isForbidden());
     }
 
     @WithAnonymousUser
     @Test
     public void deleteUserAccountTest_WithAnonymousUser() throws Exception {
-        mockMvc.perform(delete("/user/" + admin.getId()))
+        mockMvc.perform(put("/users/" + admin.getId() + "/access_state"))
                 .andExpect(status().isForbidden());
     }
 
@@ -334,7 +362,7 @@ public class UserIntegrationTests {
     public void deleteUserAccountTest_NotExistId_WithAdmin() throws Exception {
         long id = user.getId();
         userRepository.delete(user);
-        mockMvc.perform(delete("/user/" + id))
+        mockMvc.perform(put("/users/" + id + "/access_state"))
                 .andExpect(status().isBadRequest());
     }
 }

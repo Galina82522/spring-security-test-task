@@ -3,6 +3,8 @@ package ru.codeinside.springsecuritytesttask.services.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -114,6 +116,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Nonnull
+    public Page<User> getAllUsers(Pageable pageable) {
+        return userRepository.findAllByOrderById(pageable);
+    }
+
+    @Nonnull
     @Override
     @Transactional(readOnly = true)
     public User getUserAccount(@Nonnull Long userId) {
@@ -173,6 +180,13 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
     }
 
+    @Override
+    public User getCurrentUser() {
+        String login = SecurityUtils.getCurrentUserLogin();
+
+        return userRepository.findByLogin(login)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+    }
 
     @Override
     @Nonnull

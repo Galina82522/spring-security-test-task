@@ -37,7 +37,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 public class MockitoRestNoteTests {
-    private final String userUsername = "john";
     private final String adminUsername = "galya";
     @Autowired
     private MockMvc mockMvc;
@@ -83,7 +82,7 @@ public class MockitoRestNoteTests {
     public void deleteNoteTest_WithAdmin() throws Exception {
         when(noteService.deleteNote(userNote.getId())).thenReturn(new AckDTO());
 
-        mockMvc.perform(delete("/note/" + userNote.getId()))
+        mockMvc.perform(delete("/notes/" + userNote.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -95,7 +94,7 @@ public class MockitoRestNoteTests {
     @WithAnonymousUser
     @Test
     public void deleteNoteTest_WithAnonymousUser() throws Exception {
-        mockMvc.perform(delete("/note/" + userNote.getId()))
+        mockMvc.perform(delete("/notes/" + userNote.getId()))
                 .andExpect(status().isForbidden());
 
         verify(noteService, times(0)).deleteNote(any());

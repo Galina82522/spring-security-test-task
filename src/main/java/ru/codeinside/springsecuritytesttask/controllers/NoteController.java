@@ -1,9 +1,12 @@
 package ru.codeinside.springsecuritytesttask.controllers;
 
 import io.swagger.annotations.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
+import ru.codeinside.springsecuritytesttask.configs.SwaggerConfig.ApiPageable;
 import ru.codeinside.springsecuritytesttask.controllers.dto.AckDTO;
 import ru.codeinside.springsecuritytesttask.controllers.dto.NoteAddedReqDTO;
 import ru.codeinside.springsecuritytesttask.controllers.dto.NoteResDTO;
@@ -18,7 +21,7 @@ import static ru.codeinside.springsecuritytesttask.models.AuthoritiesConstants.U
 
 
 @RestController
-@RequestMapping("/note")
+@RequestMapping("/notes")
 @Api(tags = "Заметки", description = "Контроллер, определяющий все операции с заметками")
 public class NoteController {
 
@@ -29,7 +32,7 @@ public class NoteController {
     }
 
     @Secured({ADMIN, USER})
-    @PostMapping("/add")
+    @PostMapping
     @ApiOperation(value = "Добавление новой заметки",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -56,6 +59,37 @@ public class NoteController {
         Note note = noteService.getNote(Long.parseLong(noteId));
 
         return noteService.toDTO(note);
+    }
+
+    @Secured({ADMIN, USER})
+    @ApiPageable
+    @GetMapping("/user")
+    @ApiOperation(value = "Просмотр своих заметок",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            authorizations = {@Authorization(value = "OAuth", scopes = {@AuthorizationScope(scope = "read", description = "")})}
+    )
+    public Page<NoteResDTO> getCurrentUserNotes(Pageable pageable) {
+        Page<Note> notes = noteService.getCurrentUserNotes(pageable);
+
+        return notes.map(noteService::toDTO);
+    }
+
+    @Secured({ADMIN})
+    @ApiPageable
+    @GetMapping("/{id:[\\d]+}/versions")
+    @ApiOperation(value = "Просмотр версий заметки",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            authorizations = {@Authorization(value = "OAuth", scopes = {@AuthorizationScope(scope = "read", description = "")})}
+    )
+    public Page<NoteResDTO> getNoteVersions(
+            @ApiParam(required = true, value = "id заметки, версии которой нужно отобразить") @PathVariable("id") String noteId,
+            Pageable pageable
+    ) {
+        Page<Note> notes = noteService.getNoteVersions(pageable, Long.parseLong(noteId));
+
+        return notes.map(noteService::toVersionDTO);
     }
 
     @Secured({ADMIN, USER})

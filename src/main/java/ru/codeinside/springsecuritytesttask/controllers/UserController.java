@@ -1,12 +1,15 @@
 package ru.codeinside.springsecuritytesttask.controllers;
 
 import io.swagger.annotations.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.web.bind.annotation.*;
+import ru.codeinside.springsecuritytesttask.configs.SwaggerConfig.ApiPageable;
 import ru.codeinside.springsecuritytesttask.controllers.dto.AckDTO;
 import ru.codeinside.springsecuritytesttask.controllers.dto.UserRegistrationReqDTO;
 import ru.codeinside.springsecuritytesttask.controllers.dto.UserResDTO;
@@ -20,7 +23,7 @@ import static ru.codeinside.springsecuritytesttask.models.AuthoritiesConstants.*
 
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 @Api(tags = "Пользователи", description = "Контроллер, определяющий все операции с учетными записями пользователей")
 public class UserController {
 
@@ -31,7 +34,7 @@ public class UserController {
     }
 
     @Secured({ANONYMOUS, ADMIN})
-    @PostMapping("/registration")
+    @PostMapping
     @ApiOperation(value = "Регистрация нового пользователя",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -60,6 +63,20 @@ public class UserController {
         return userService.toDTO(user);
     }
 
+    @Secured({ADMIN})
+    @ApiPageable
+    @GetMapping
+    @ApiOperation(value = "Просмотр всех пользователей",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            authorizations = {@Authorization(value = "OAuth", scopes = {@AuthorizationScope(scope = "read", description = "")})}
+    )
+    public Page<UserResDTO> getAllUsers(Pageable pageable) {
+        Page<User> users = userService.getAllUsers(pageable);
+
+        return users.map(userService::toDTO);
+    }
+
     @Secured({ADMIN, USER})
     @PutMapping("/{id:[\\d]+}")
     @ApiOperation(value = "Изменение пользователя",
@@ -78,7 +95,7 @@ public class UserController {
     }
 
     @Secured(ADMIN)
-    @DeleteMapping("/{id:[\\d]+}")
+    @PutMapping("/{id:[\\d]+}/access_state")
     @ApiOperation(value = "Удаление пользователя",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE,

@@ -1,5 +1,7 @@
 package ru.codeinside.springsecuritytesttask.services;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import ru.codeinside.springsecuritytesttask.controllers.dto.AckDTO;
 import ru.codeinside.springsecuritytesttask.controllers.dto.NoteAddedReqDTO;
 import ru.codeinside.springsecuritytesttask.controllers.dto.NoteResDTO;
@@ -30,6 +32,22 @@ public interface NoteService {
     Note getNote(@Nonnull Long noteId);
 
     /**
+     * Получение всех заметок текущего пользователя
+     *
+     * @return список заметок
+     */
+    @Nonnull
+    Page<Note> getCurrentUserNotes(Pageable pageable);
+
+    /**
+     * Получение версий заметки
+     * @param noteId ID заметки
+     * @return список заметок
+     */
+    @Nonnull
+    Page<Note> getNoteVersions(@Nonnull Pageable pageable, Long noteId);
+
+    /**
      * Обновление заметки
      *
      * @param noteId  ID заметки
@@ -50,4 +68,7 @@ public interface NoteService {
 
     @Nonnull
     NoteResDTO toDTO(@Nonnull Note note);
+
+    @Nonnull
+    NoteResDTO toVersionDTO(@Nonnull Note note);
 }

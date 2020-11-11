@@ -1,5 +1,7 @@
 package ru.codeinside.springsecuritytesttask.services;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import ru.codeinside.springsecuritytesttask.controllers.dto.AckDTO;
 import ru.codeinside.springsecuritytesttask.controllers.dto.UserRegistrationReqDTO;
@@ -23,7 +25,15 @@ public interface UserService {
     OAuth2AccessToken registerNewUserAccount(@Nonnull UserRegistrationReqDTO accountDTO) throws UserAlreadyExistException;
 
     /**
-     * Получение информауции о пользователе
+     * Получение всех пользователей
+     *
+     * @return список всех пользователей
+     */
+    @Nonnull
+    Page<User> getAllUsers(Pageable pageable);
+
+    /**
+     * Получение информации о пользователе
      *
      * @param userId ID пользователя
      * @return пользователь
@@ -69,6 +79,13 @@ public interface UserService {
      * @return Если userId равен Id текущего пользователя, то будет возвращено true, иначе false.
      */
     boolean isCurrentUser(@Nonnull Long userId);
+
+    /**
+     * Метод возвращает текущего пользователя
+     *
+     * @return текущий пользователь
+     */
+    User getCurrentUser();
 
     @Nonnull
     UserResDTO toDTO(@Nonnull User user);

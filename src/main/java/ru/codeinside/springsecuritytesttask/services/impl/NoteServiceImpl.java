@@ -1,6 +1,11 @@
 package ru.codeinside.springsecuritytesttask.services.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.query.AuditEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.codeinside.springsecuritytesttask.controllers.dto.AckDTO;
@@ -10,12 +15,16 @@ import ru.codeinside.springsecuritytesttask.controllers.dto.NoteUpdatedReqDTO;
 import ru.codeinside.springsecuritytesttask.exceptions.NotAllowedException;
 import ru.codeinside.springsecuritytesttask.exceptions.NoteNotFoundException;
 import ru.codeinside.springsecuritytesttask.models.Note;
+import ru.codeinside.springsecuritytesttask.models.User;
 import ru.codeinside.springsecuritytesttask.oauth2.SecurityUtils;
 import ru.codeinside.springsecuritytesttask.repository.NoteRepository;
 import ru.codeinside.springsecuritytesttask.services.NoteService;
 import ru.codeinside.springsecuritytesttask.services.UserService;
 
 import javax.annotation.Nonnull;
+import javax.persistence.EntityManagerFactory;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -24,10 +33,14 @@ import javax.annotation.Nonnull;
 public class NoteServiceImpl implements NoteService {
     private final NoteRepository noteRepository;
     private final UserService userService;
+    private final EntityManagerFactory entityManagerfactory;
 
-    public NoteServiceImpl(NoteRepository noteRepository, UserService userService) {
+    public NoteServiceImpl(
+            NoteRepository noteRepository, UserService userService, EntityManagerFactory entityManagerfactory
+    ) {
         this.noteRepository = noteRepository;
         this.userService = userService;
+        this.entityManagerfactory = entityManagerfactory;
     }
 
     @Override
@@ -62,6 +75,32 @@ public class NoteServiceImpl implements NoteService {
         } else {
             throw new NotAllowedException();
         }
+    }
+
+    @Nonnull
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Note> getCurrentUserNotes(Pageable pageable) {
+        User user = userService.getCurrentUser();
+
+        return noteRepository.findAllByUserOrderByCreated(pageable, user);
+    }
+
+    @Nonnull
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Note> getNoteVersions(@Nonnull Pageable pageable, Long noteId) {
+        List<Note> notes = AuditReaderFactory.get(entityManagerfactory.createEntityManager())
+                .createQuery()
+                .forRevisionsOfEntity(Note.class,true, true)
+                .add(AuditEntity.id().eq(noteId))
+                .addOrder(AuditEntity.revisionNumber().asc())
+                .getResultList();
+
+        int toSkip = pageable.getPageSize() * pageable.getPageNumber();
+        notes = notes.stream().skip(toSkip).limit(pageable.getPageSize()).collect(Collectors.toList());
+
+        return new PageImpl<>(notes, pageable, pageable.getPageNumber());
     }
 
     @Nonnull
@@ -111,6 +150,20 @@ public class NoteServiceImpl implements NoteService {
                 .createdBy(note.getCreatedBy())
                 .lastModifiedBy(note.getLastModifiedBy())
                 .userId(note.getUser().getId())
+                .build();
+    }
+
+    @Override
+    @Nonnull
+    public NoteResDTO toVersionDTO(@Nonnull Note note) {
+        return NoteResDTO.builder()
+                .id(note.getId())
+                .title(note.getTitle())
+                .text(note.getText())
+                .created(note.getCreated())
+                .updated(note.getUpdated())
+                .createdBy(note.getCreatedBy())
+                .lastModifiedBy(note.getLastModifiedBy())
                 .build();
     }
 

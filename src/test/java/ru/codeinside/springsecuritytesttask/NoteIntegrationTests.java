@@ -94,7 +94,7 @@ public class NoteIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(post("/note/add")
+        mockMvc.perform(post("/notes")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andDo(print())
@@ -118,7 +118,7 @@ public class NoteIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(post("/note/add")
+        mockMvc.perform(post("/notes")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andExpect(status().isForbidden());
@@ -127,7 +127,7 @@ public class NoteIntegrationTests {
     @WithUserDetails(value = userUsername, userDetailsServiceBeanName = "userDetailsService")
     @Test
     public void getNoteTest_WithUser() throws Exception {
-        mockMvc.perform(get("/note/" + userNote.getId()))
+        mockMvc.perform(get("/notes/" + userNote.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -139,7 +139,7 @@ public class NoteIntegrationTests {
     @WithUserDetails(value = userUsername, userDetailsServiceBeanName = "userDetailsService")
     @Test
     public void getNoteTest_NotCurrentUserNote() throws Exception {
-        mockMvc.perform(get("/note/" + adminNote.getId()))
+        mockMvc.perform(get("/notes/" + adminNote.getId()))
                 .andExpect(status().isMethodNotAllowed());
     }
 
@@ -148,14 +148,14 @@ public class NoteIntegrationTests {
     public void getNoteTest_NotExistNote() throws Exception {
         long id = userNote.getId();
         noteRepository.delete(userNote);
-        mockMvc.perform(get("/note/" + id))
+        mockMvc.perform(get("/notes/" + id))
                 .andExpect(status().isBadRequest());
     }
 
     @WithUserDetails(value = adminUsername, userDetailsServiceBeanName = "userDetailsService")
     @Test
     public void getNoteTest_WithAdmin() throws Exception {
-        mockMvc.perform(get("/note/" + userNote.getId()))
+        mockMvc.perform(get("/notes/" + userNote.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -167,8 +167,45 @@ public class NoteIntegrationTests {
     @WithAnonymousUser
     @Test
     public void getNoteTest_WithAnonymous() throws Exception {
-        mockMvc.perform(get("/note/" + userNote.getId()))
+        mockMvc.perform(get("/notes/" + userNote.getId()))
                 .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @WithUserDetails(value = userUsername, userDetailsServiceBeanName = "userDetailsService")
+    @Test
+    public void getCurrentUserNotes_WithUser() throws Exception {
+        noteRepository.deleteAllInBatch();
+        Note note1 = testStubs.stubNote(user);
+        Note note2 = testStubs.stubNote(user);
+
+        mockMvc.perform(get("/notes/user"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].created_by", is(user.getLogin())))
+                .andExpect(jsonPath("$.content[0].id", is(note1.getId().intValue())))
+                .andExpect(jsonPath("$.content[1].created_by", is(user.getLogin())))
+                .andExpect(jsonPath("$.content[1].id", is(note2.getId().intValue())));
+    }
+
+    @WithUserDetails(value = adminUsername, userDetailsServiceBeanName = "userDetailsService")
+    @Test
+    public void getCurrentUserNotes_WithAdmin() throws Exception {
+        mockMvc.perform(get("/notes/user"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].created_by", is(admin.getLogin())))
+                .andExpect(jsonPath("$.content[0].id", is(adminNote.getId().intValue())));
+    }
+
+    @WithAnonymousUser
+    @Test
+    public void getCurrentUserNotes_WithAnonymous() throws Exception {
+        mockMvc.perform(get("/notes/user"))
                 .andExpect(status().isForbidden());
     }
 
@@ -186,7 +223,7 @@ public class NoteIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(put("/note/" + userNote.getId())
+        mockMvc.perform(put("/notes/" + userNote.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andDo(print())
@@ -221,7 +258,7 @@ public class NoteIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(put("/note/" + userNote.getId())
+        mockMvc.perform(put("/notes/" + userNote.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andDo(print())
@@ -251,7 +288,7 @@ public class NoteIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(put("/note/" + adminNote.getId())
+        mockMvc.perform(put("/notes/" + adminNote.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andExpect(status().isMethodNotAllowed());
@@ -266,7 +303,7 @@ public class NoteIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(put("/note/" + adminNote.getId())
+        mockMvc.perform(put("/notes/" + adminNote.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andExpect(status().isForbidden());
@@ -284,7 +321,7 @@ public class NoteIntegrationTests {
 
         String req = objectMapper.writeValueAsString(dto);
 
-        mockMvc.perform(put("/note/" + id)
+        mockMvc.perform(put("/notes/" + id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(req))
                 .andExpect(status().isBadRequest());
@@ -293,7 +330,7 @@ public class NoteIntegrationTests {
     @WithUserDetails(value = userUsername, userDetailsServiceBeanName = "userDetailsService")
     @Test
     public void deleteNoteTest_WithUser() throws Exception {
-        mockMvc.perform(delete("/note/" + userNote.getId()))
+        mockMvc.perform(delete("/notes/" + userNote.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -303,7 +340,7 @@ public class NoteIntegrationTests {
     @WithUserDetails(value = adminUsername, userDetailsServiceBeanName = "userDetailsService")
     @Test
     public void deleteNoteTest_WithAdmin() throws Exception {
-        mockMvc.perform(delete("/note/" + userNote.getId()))
+        mockMvc.perform(delete("/notes/" + userNote.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -313,7 +350,7 @@ public class NoteIntegrationTests {
     @WithUserDetails(value = userUsername, userDetailsServiceBeanName = "userDetailsService")
     @Test
     public void deleteNoteTest_NotCurrentUserNote() throws Exception {
-        mockMvc.perform(delete("/note/" + adminNote.getId()))
+        mockMvc.perform(delete("/notes/" + adminNote.getId()))
                 .andExpect(status().isMethodNotAllowed());
     }
 
@@ -323,7 +360,7 @@ public class NoteIntegrationTests {
         Long id = userNote.getId();
         noteRepository.delete(userNote);
 
-        mockMvc.perform(delete("/note/" + id))
+        mockMvc.perform(delete("/notes/" + id))
                 .andExpect(status().isBadRequest());
     }
 }
